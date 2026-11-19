@@ -1,0 +1,326 @@
+<title>Замовлення подорожі</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@600&display=swap">
+<style>
+/* Концепт: веб-інтерфейс (WUI) бронювання — покроковий майстер зліва, живий підсумок замовлення справа.
+   Палітра: глибока морська синь, пісочний акцент, нейтралі з холодним відтінком. */
+:root{
+  --bg:#eef3f6; --surface:#ffffff; --surface2:#f6f9fb; --ink:#14263a; --mut:#566879; --line:#d6e0e8;
+  --brand:#0a6a86; --brand-ink:#ffffff; --brand-soft:#dcf0f5; --sand:#f0a33b; --sand-soft:#fdf0d9;
+  --ok:#1b7f55; --ok-soft:#dff3ea; --err:#b3342a; --err-soft:#fbe5e2;
+  --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --f-logo:"Unbounded","Onest",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1a26; --surface:#14283a; --surface2:#112233; --ink:#e8f0f6; --mut:#9db1c2; --line:#27405a;
+    --brand:#4cc3df; --brand-ink:#06222d; --brand-soft:#173c4d; --sand:#f3b25a; --sand-soft:#3b2f1c;
+    --ok:#52d19b; --ok-soft:#173a2d; --err:#ff8f84; --err-soft:#3d1f1d; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1a26; --surface:#14283a; --surface2:#112233; --ink:#e8f0f6; --mut:#9db1c2; --line:#27405a;
+  --brand:#4cc3df; --brand-ink:#06222d; --brand-soft:#173c4d; --sand:#f3b25a; --sand-soft:#3b2f1c;
+  --ok:#52d19b; --ok-soft:#173a2d; --err:#ff8f84; --err-soft:#3d1f1d; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.logo{font-family:var(--f-logo);font-size:19px;letter-spacing:.01em;color:var(--brand)}
+.logo small{display:block;font-family:var(--f-body);font-size:12px;color:var(--mut);letter-spacing:0;margin-top:2px}
+ol.steps{display:flex;gap:6px;list-style:none;margin:0;padding:0;flex-wrap:wrap}
+ol.steps li button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--mut);padding:6px 12px;border-radius:999px;cursor:default}
+ol.steps li button .n{display:inline-block;min-width:18px;font-weight:700}
+ol.steps li.done button{cursor:pointer;color:var(--ink);border-color:var(--brand)}
+ol.steps li.now button{background:var(--brand);color:var(--brand-ink);border-color:var(--brand);font-weight:600}
+.stepnote{display:none;font-size:13px;color:var(--mut)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:minmax(0,1fr)} ol.steps{display:none} .stepnote{display:block}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px}
+.panel + .panel{margin-top:16px}
+h1,h2,h3{margin:0;font-weight:600;text-wrap:balance}
+h1{font-size:24px;margin-bottom:4px} h2{font-size:18px;margin-bottom:12px} h3{font-size:15px}
+.lead{color:var(--mut);margin:0 0 16px}
+label,.lbl{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+select,input[type=text],input[type=date],input[type=email],input[type=tel]{width:100%;font:inherit;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:40px}
+input:disabled{opacity:.55;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--sand);outline-offset:2px}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.stepper{display:flex;align-items:center;gap:10px}
+.stepper button{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);font-size:20px;cursor:pointer}
+.stepper output{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.chip span{display:inline-block;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);font-size:14px}
+.chip input:checked + span{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.chip input:focus-visible + span{outline:3px solid var(--sand);outline-offset:2px}
+input[type=range]{width:100%;accent-color:var(--brand)}
+.row{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.btn{font:inherit;font-weight:600;border-radius:8px;border:1px solid var(--brand);background:var(--brand);color:var(--brand-ink);padding:10px 18px;min-height:42px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.hint{font-size:13px;color:var(--mut)}
+.res-head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin:20px 0 10px}
+.res-head select{width:auto}
+.cards{display:grid;gap:12px}
+.tour{display:grid;grid-template-columns:132px minmax(0,1fr) auto;gap:16px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2)}
+.tour.sel{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-soft) inset;background:var(--brand-soft)}
+.poster{height:92px;border-radius:8px;display:flex;flex-direction:column;justify-content:flex-end;padding:8px 10px;color:#fff;font-weight:700;font-size:13px;background:linear-gradient(135deg,var(--c1),var(--c2))}
+.poster b{font-size:20px;line-height:1.1}
+.tour h3{margin-bottom:2px}
+.meta{display:flex;gap:6px 14px;flex-wrap:wrap;color:var(--mut);font-size:13px}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sand-soft);color:var(--ink);margin-right:6px}
+.price{text-align:right;min-width:110px}
+.price strong{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.price small{color:var(--mut)}
+@media (max-width:560px){.tour{grid-template-columns:minmax(0,1fr)} .price{text-align:left} .poster{height:72px}}
+.empty{border:1px dashed var(--line);border-radius:10px;padding:24px;text-align:center;color:var(--mut)}
+.opt{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--surface2);margin-bottom:10px;cursor:pointer}
+.opt input{margin-top:4px;accent-color:var(--brand);width:18px;height:18px}
+.opt.on{border-color:var(--brand);background:var(--brand-soft)}
+.opt .grow{flex:1;min-width:0}
+.opt .pr{font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.err{color:var(--err);font-size:13px;margin-top:4px;min-height:0}
+.invalid{border-color:var(--err)!important}
+.trav{border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:12px;background:var(--surface2)}
+.trav h3{margin-bottom:10px}
+ul.plain{margin:0;padding-left:18px} ul.plain li{margin-bottom:4px}
+aside .panel{position:sticky;top:12px}
+table.sum{width:100%;border-collapse:collapse;font-size:14px}
+table.sum td{padding:5px 0;vertical-align:top}
+table.sum td:last-child{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.sum tr.tot td{border-top:1px solid var(--line);padding-top:10px;font-weight:700;font-size:17px}
+.ok-box{background:var(--ok-soft);border:1px solid var(--ok);border-radius:10px;padding:16px;margin-bottom:16px}
+.ok-box strong{font-size:18px}
+.toast{margin-top:12px;font-size:13px;color:var(--mut)}
+.kv{display:grid;grid-template-columns:140px minmax(0,1fr);gap:6px 12px;font-size:14px} .kv dt{color:var(--mut)} .kv dd{margin:0}
+@media (prefers-reduced-motion:no-preference){.panel{transition:border-color .15s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">Маршрут<small>замовлення туристичної подорожі</small></div>
+    <ol class="steps" id="steps" aria-label="Кроки замовлення"></ol>
+    <div class="stepnote" id="stepnote"></div>
+  </header>
+  <div class="grid">
+    <main id="main"></main>
+    <aside><div class="panel" id="summary" aria-live="polite"></div></aside>
+  </div>
+</div>
+
+<script>
+const TOURS=[
+ {id:'t1',name:'Анталія, все включено',country:'Туреччина',type:'beach',nights:7,stars:5,board:'Все включено',price:620,rating:8.9,dep:'2026-12-20',c1:'#0a6a86',c2:'#3fb4c9',abroad:true,hotel:'Lara Beach Resort',info:['Пляж із дрібним піском, 50 м від готелю','Дитячий клуб і басейн з гірками','Крита зона відпочинку, СПА-зона'],incl:['Переліт, багаж 20 кг','Проживання 7 ночей','Харчування «все включено»']},
+ {id:'t2',name:'Шарм-ель-Шейх',country:'Єгипет',type:'beach',nights:7,stars:4,board:'Все включено',price:540,rating:8.4,dep:'2026-12-27',c1:'#b96a1c',c2:'#f0a33b',abroad:true,hotel:'Coral Bay Hotel',info:['Коралові рифи для снорклінгу біля берега','Підігрів басейнів узимку','Вечірнє шоу щодня'],incl:['Переліт, багаж 20 кг','Проживання 7 ночей','Харчування «все включено»']},
+ {id:'t3',name:'Новорічний Буковель',country:'Україна',type:'mountain',nights:5,stars:4,board:'Напівпансіон',price:310,rating:9.1,dep:'2026-12-26',c1:'#2c4a6e',c2:'#7ea3c9',abroad:false,hotel:'Karpaty Lodge',info:['Підйомники в 400 м від готелю','Прокат спорядження на території','Баня та чан'],incl:['Проживання 5 ночей','Сніданки й вечері','Ски-пас на 2 дні']},
+ {id:'t4',name:'Відень, Зальцбург, Прага',country:'Європа',type:'excursion',nights:6,stars:3,board:'Сніданки',price:480,rating:8.7,dep:'2027-01-04',c1:'#6a3b5c',c2:'#c47fa8',abroad:true,hotel:'Hotel Central (3 міста)',info:['Автобусний маршрут із гідом','Різдвяні ярмарки та оглядові екскурсії','Вільний час для самостійних прогулянок'],incl:['Автобус, супровід','Проживання 6 ночей','Сніданки, 3 екскурсії']},
+ {id:'t5',name:'Дубай: місто і пустеля',country:'ОАЕ',type:'city',nights:6,stars:5,board:'Сніданки',price:890,rating:9.0,dep:'2027-01-10',c1:'#1f2f4a',c2:'#d19a3a',abroad:true,hotel:'Marina Tower Hotel',info:['Готель у Dubai Marina','Сафарі в пустелі, прогулянка на яхті','Метро до основних локацій'],incl:['Переліт, багаж 23 кг','Проживання 6 ночей','Сніданки, сафарі']},
+ {id:'t6',name:'Закопане: гори і терми',country:'Польща',type:'mountain',nights:5,stars:3,board:'Напівпансіон',price:360,rating:8.5,dep:'2027-01-08',c1:'#3a5a4a',c2:'#8ab59b',abroad:true,hotel:'Pensjonat Tatry',info:['Термальні басейни Chocholow','Лижні траси Kasprowy Wierch','Прогулянка по Крупувках'],incl:['Автобус із Львова','Проживання 5 ночей','Вечері, вхід до терм']},
+ {id:'t7',name:'Рим, Флоренція, Венеція',country:'Італія',type:'excursion',nights:8,stars:4,board:'Сніданки',price:760,rating:8.8,dep:'2027-02-14',c1:'#8a3a2e',c2:'#e08a6a',abroad:true,hotel:'Albergo Italia',info:['Потяги між містами в вартості','Музеї Ватикану й Уффіці з гідом','Прогулянка на водному трамваї'],incl:['Переліт, багаж 20 кг','Проживання 8 ночей','Сніданки, екскурсії']},
+ {id:'t8',name:'Тенерифе',country:'Іспанія',type:'beach',nights:8,stars:4,board:'Напівпансіон',price:810,rating:8.6,dep:'2027-02-20',c1:'#0e5a62',c2:'#52b8a0',abroad:true,hotel:'Playa Sur Hotel',info:['Вулкан Тейде, канатна дорога','Пляжі з чорним піском','Підігрів басейнів увесь рік'],incl:['Переліт, багаж 20 кг','Проживання 8 ночей','Вечері']}
+];
+const TYPES={beach:'Пляжний',mountain:'Гірський',excursion:'Екскурсійний',city:'Міський'};
+const ROOMS={std:{n:'Стандарт',d:'Двомісний номер, 22 м², вид на двір',add:0},imp:{n:'Покращений',d:'Номер 30 м², балкон, вид на море чи гори',add:60},lux:{n:'Люкс',d:'Сьюїт 45 м², окрема вітальня, пізній виїзд',add:150}};
+const STEPS=['Пошук','Тур','Мандрівники','Додатково','Оплата','Готово'];
+const S={step:0,f:{country:'all',types:new Set(),from:'2026-12-15',to:'2027-02-28',adults:2,kids:0,ages:[],budget:900,sort:'price'},tour:null,room:'std',people:[],contact:{phone:'',email:''},extras:{ins:true,trf:false,exc:false},pay:'card',terms:false,booking:null,errors:{}};
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=n=>'€'+Math.round(n).toLocaleString('uk-UA');
+const fmt=d=>new Date(d+'T00:00:00').toLocaleDateString('uk-UA',{day:'numeric',month:'long',year:'numeric'});
+const addDays=(d,n)=>{const x=new Date(d+'T00:00:00');x.setDate(x.getDate()+n);return x.toISOString().slice(0,10)};
+const trav=()=>S.f.adults+S.f.kids;
+
+function calc(){
+  const t=S.tour; if(!t) return null;
+  const per=t.price+ROOMS[S.room].add, days=t.nights+1, n=trav();
+  const base=per*S.f.adults+per*0.7*S.f.kids;
+  const ins=S.extras.ins?3*days*n:0, trf=S.extras.trf?25:0, exc=S.extras.exc?45*n:0;
+  return {base,ins,trf,exc,total:base+ins+trf+exc};
+}
+function filtered(){
+  const f=S.f;
+  let r=TOURS.filter(t=>(f.country==='all'||t.country===f.country)&&(!f.types.size||f.types.has(t.type))&&t.dep>=f.from&&t.dep<=f.to&&t.price<=f.budget);
+  const k={price:(a,b)=>a.price-b.price,rating:(a,b)=>b.rating-a.rating,nights:(a,b)=>a.nights-b.nights,date:(a,b)=>a.dep.localeCompare(b.dep)}[f.sort];
+  return r.sort(k);
+}
+
+/* ---------- верх: кроки ---------- */
+function renderSteps(){
+  $('#steps').innerHTML=STEPS.map((s,i)=>`<li class="${i<S.step?'done':i===S.step?'now':''}"><button type="button" data-go="${i}" ${i<S.step&&S.step<5?'':'disabled'} ${i===S.step?'aria-current="step"':''}><span class="n">${i+1}</span> ${s}</button></li>`).join('');
+  $('#stepnote').textContent=`Крок ${S.step+1} з 6: ${STEPS[S.step]}`;
+}
+/* ---------- підсумок ---------- */
+function renderSummary(){
+  const t=S.tour,c=calc();
+  let h='<h2>Ваше замовлення</h2>';
+  if(!t){h+='<p class="hint">Тур ще не обрано. Знайдіть тур на першому кроці, і тут з’явиться вартість.</p>';}
+  else{
+    h+=`<h3>${esc(t.name)}</h3><p class="hint" style="margin:2px 0 10px">${t.country}, ${t.nights} ноч. · виліт ${fmt(t.dep)}</p>
+    <table class="sum">
+      <tr><td>Мандрівники</td><td>${S.f.adults} дор.${S.f.kids?`, ${S.f.kids} діт.`:''}</td></tr>
+      <tr><td>Тур, номер «${ROOMS[S.room].n}»</td><td>${eur(c.base)}</td></tr>
+      ${c.ins?`<tr><td>Страхування</td><td>${eur(c.ins)}</td></tr>`:''}
+      ${c.trf?`<tr><td>Трансфер</td><td>${eur(c.trf)}</td></tr>`:''}
+      ${c.exc?`<tr><td>Екскурсії</td><td>${eur(c.exc)}</td></tr>`:''}
+      <tr class="tot"><td>Разом</td><td>${eur(c.total)}</td></tr></table>`;
+  }
+  $('#summary').innerHTML=h;
+}
+
+/* ---------- крок 1: пошук і результати ---------- */
+function renderSearch(){
+  const f=S.f, countries=[...new Set(TOURS.map(t=>t.country))];
+  const kids=f.kids?`<div style="grid-column:1/-1"><span class="lbl">Вік дітей</span><div class="fields">${f.ages.map((a,i)=>`<div><select id="age${i}" data-age="${i}" aria-label="Вік дитини ${i+1}">${Array.from({length:18},(_,y)=>`<option value="${y}" ${y===a?'selected':''}>${y} ${y===1?'рік':y>=2&&y<=4?'роки':'років'}</option>`).join('')}</select></div>`).join('')}</div></div>`:'';
+  $('#main').innerHTML=`
+  <section class="panel">
+    <h1>Куди поїдемо?</h1><p class="lead">Задайте параметри. Список турів нижче оновлюється одразу.</p>
+    <div class="fields">
+      <div><label for="country">Напрямок</label><select id="country"><option value="all">Усі країни</option>${countries.map(c=>`<option ${c===f.country?'selected':''}>${c}</option>`).join('')}</select></div>
+      <div><label for="from">Виліт не раніше</label><input type="date" id="from" value="${f.from}"></div>
+      <div><label for="to">Виліт не пізніше</label><input type="date" id="to" value="${f.to}"></div>
+      <div><span class="lbl">Дорослі</span><div class="stepper"><button type="button" data-n="adults" data-d="-1" aria-label="Менше дорослих">−</button><output id="oa">${f.adults}</output><button type="button" data-n="adults" data-d="1" aria-label="Більше дорослих">+</button></div></div>
+      <div><span class="lbl">Діти (до 18 років)</span><div class="stepper"><button type="button" data-n="kids" data-d="-1" aria-label="Менше дітей">−</button><output id="ok">${f.kids}</output><button type="button" data-n="kids" data-d="1" aria-label="Більше дітей">+</button></div></div>
+      ${kids}
+      <div><label for="budget">Бюджет на особу: до <span id="bv">${eur(f.budget)}</span></label><input type="range" id="budget" min="300" max="1000" step="10" value="${f.budget}"></div>
+    </div>
+    <div style="margin-top:16px"><span class="lbl">Тип відпочинку</span><div class="chips">${Object.entries(TYPES).map(([k,v])=>`<label class="chip"><input type="checkbox" data-type="${k}" ${f.types.has(k)?'checked':''}><span>${v}</span></label>`).join('')}</div></div>
+  </section>
+  <section class="panel" id="results"></section>`;
+  renderResults();
+}
+function renderResults(){
+  const r=filtered();
+  const list=r.length?r.map(t=>`<article class="tour ${S.tour&&S.tour.id===t.id?'sel':''}">
+    <div class="poster" style="--c1:${t.c1};--c2:${t.c2}"><span>${t.country}</span><b>${t.nights} ноч.</b></div>
+    <div style="min-width:0"><h3>${esc(t.name)}</h3>
+      <div style="margin:4px 0"><span class="tag">${TYPES[t.type]}</span><span class="tag">${t.stars}★</span><span class="tag">${t.board}</span></div>
+      <div class="meta"><span>Виліт ${fmt(t.dep)}</span><span>Рейтинг ${t.rating.toFixed(1)}/10</span></div></div>
+    <div class="price"><strong>${eur(t.price)}</strong><small>за особу</small><div style="margin-top:8px"><button class="btn ${S.tour&&S.tour.id===t.id?'':'ghost'}" type="button" data-pick="${t.id}">${S.tour&&S.tour.id===t.id?'Обрано':'Обрати'}</button></div></div></article>`).join('')
+    :`<div class="empty"><b>Нічого не знайдено</b><br>Збільште бюджет, розширте діапазон дат або зніміть фільтр за типом відпочинку.</div>`;
+  $('#results').innerHTML=`<div class="res-head" style="margin-top:0"><h2 style="margin:0">Знайдено турів: ${r.length}</h2>
+    <div><label for="sort" style="display:inline-block;margin-right:8px">Сортувати</label><select id="sort"><option value="price" ${S.f.sort==='price'?'selected':''}>За ціною</option><option value="rating" ${S.f.sort==='rating'?'selected':''}>За рейтингом</option><option value="nights" ${S.f.sort==='nights'?'selected':''}>За тривалістю</option><option value="date" ${S.f.sort==='date'?'selected':''}>За датою вильоту</option></select></div></div>
+    <div class="cards">${list}</div>
+    <div class="row" style="margin-top:16px"><span class="hint">${S.tour?'Обрано: '+esc(S.tour.name):'Оберіть тур, щоб перейти далі.'}</span><button class="btn" type="button" data-next ${S.tour?'':'disabled'}>Далі: деталі туру</button></div>`;
+}
+
+/* ---------- крок 2: деталі ---------- */
+function renderTour(){
+  const t=S.tour;
+  $('#main').innerHTML=`<section class="panel"><h1>${esc(t.name)}</h1><p class="lead">${t.country} · ${t.nights} ночей · виліт ${fmt(t.dep)}, повернення ${fmt(addDays(t.dep,t.nights))}</p>
+   <div class="fields"><div><h3>Готель</h3><p style="margin:4px 0">${esc(t.hotel)}, ${t.stars}★, ${t.board.toLowerCase()}</p><ul class="plain">${t.info.map(i=>`<li>${i}</li>`).join('')}</ul></div>
+   <div><h3>У вартість входить</h3><ul class="plain" style="margin-top:6px">${t.incl.map(i=>`<li>${i}</li>`).join('')}</ul></div></div></section>
+   <section class="panel"><h2>Оберіть тип номера</h2>${Object.entries(ROOMS).map(([k,v])=>`<label class="opt ${S.room===k?'on':''}"><input type="radio" name="room" value="${k}" ${S.room===k?'checked':''}><span class="grow"><b>${v.n}</b><br><span class="hint">${v.d}</span></span><span class="pr">${v.add?'+'+eur(v.add)+' / особу':'у вартості'}</span></label>`).join('')}
+   <p class="hint">Безкоштовне скасування за 14 днів до вильоту. Після цього утримується 30% вартості.</p>
+   <div class="row" style="margin-top:12px"><button class="btn ghost" type="button" data-back>Назад</button><button class="btn" type="button" data-next>Далі: мандрівники</button></div></section>`;
+}
+
+/* ---------- крок 3: мандрівники ---------- */
+function ensurePeople(){
+  const n=trav(); while(S.people.length<n) S.people.push({name:'',birth:'',passport:''}); S.people.length=n;
+}
+function renderPeople(){
+  ensurePeople(); const t=S.tour,e=S.errors;
+  const f=(i,k,l,ph,type='text',dis=false)=>`<div><label for="p${i}${k}">${l}</label><input id="p${i}${k}" type="${type}" data-p="${i}" data-k="${k}" placeholder="${ph}" value="${esc(S.people[i][k])}" ${dis?'disabled':''} class="${e['p'+i+k]?'invalid':''}"><div class="err">${e['p'+i+k]||''}</div></div>`;
+  $('#main').innerHTML=`<section class="panel"><h1>Дані мандрівників</h1><p class="lead">Ім’я та прізвище пишіть латиницею, як у закордонному паспорті.</p>
+  ${S.people.map((p,i)=>`<div class="trav"><h3>${i<S.f.adults?'Дорослий':'Дитина'} ${i<S.f.adults?i+1:i-S.f.adults+1}</h3><div class="fields">
+    ${f(i,'name','Ім’я та прізвище','IVAN PETRENKO')}
+    ${f(i,'birth','Дата народження','','date')}
+    ${t.abroad?f(i,'passport','Номер закордонного паспорта','FK123456'):f(i,'passport','Закордонний паспорт','Не потрібен для цього туру','text',true)}
+  </div></div>`).join('')}
+  <h2 style="margin-top:20px">Контакти для зв’язку</h2><div class="fields">
+    <div><label for="phone">Телефон</label><input id="phone" type="tel" placeholder="+380 50 123 45 67" value="${esc(S.contact.phone)}" class="${e.phone?'invalid':''}"><div class="err">${e.phone||''}</div></div>
+    <div><label for="email">Електронна пошта</label><input id="email" type="email" placeholder="name@example.com" value="${esc(S.contact.email)}" class="${e.email?'invalid':''}"><div class="err">${e.email||''}</div></div></div>
+  <div class="row" style="margin-top:12px"><button class="btn ghost" type="button" data-back>Назад</button><button class="btn" type="button" data-next>Далі: додаткові послуги</button></div></section>`;
+}
+function validatePeople(){
+  const e={},t=S.tour;
+  S.people.forEach((p,i)=>{
+    if(!/^[A-Za-z'’-]{2,}\s+[A-Za-z'’ -]{2,}$/.test(p.name.trim())) e['p'+i+'name']='Введіть ім’я та прізвище латиницею';
+    if(!p.birth) e['p'+i+'birth']='Вкажіть дату народження';
+    if(t.abroad && !/^[A-Z]{2}\d{6}$/.test(p.passport.trim().toUpperCase())) e['p'+i+'passport']='Формат: дві літери та шість цифр';
+  });
+  if(!/^\+?\d[\d\s()-]{8,}$/.test(S.contact.phone.trim())) e.phone='Введіть номер телефону з кодом';
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(S.contact.email.trim())) e.email='Перевірте адресу пошти';
+  S.errors=e; return !Object.keys(e).length;
+}
+
+/* ---------- крок 4: додатково ---------- */
+function renderExtras(){
+  const t=S.tour,n=trav(),days=t.nights+1;
+  const x=(k,title,desc,price)=>`<label class="opt ${S.extras[k]?'on':''}"><input type="checkbox" data-x="${k}" ${S.extras[k]?'checked':''}><span class="grow"><b>${title}</b><br><span class="hint">${desc}</span></span><span class="pr">${price}</span></label>`;
+  $('#main').innerHTML=`<section class="panel"><h1>Додаткові послуги</h1><p class="lead">Усе необов’язкове. Вартість у підсумку праворуч змінюється одразу.</p>
+  ${x('ins','Медичне страхування','Покриття до €30 000, включно з COVID-19',eur(3*days*n)+' ('+n+' осіб)')}
+  ${x('trf','Трансфер аеропорт — готель — аеропорт','Мінівен на всю групу, зустріч із табличкою',eur(25))}
+  ${x('exc','Екскурсійний пакет','Дві обзорні екскурсії з гідом українською',eur(45*n))}
+  <div class="row" style="margin-top:12px"><button class="btn ghost" type="button" data-back>Назад</button><button class="btn" type="button" data-next>Далі: підтвердження й оплата</button></div></section>`;
+}
+
+/* ---------- крок 5: оплата ---------- */
+function renderPay(){
+  const t=S.tour,c=calc();
+  $('#main').innerHTML=`<section class="panel"><h1>Перевірте замовлення</h1><p class="lead">Після оплати путівку буде надіслано на ${esc(S.contact.email)}.</p>
+  <dl class="kv"><dt>Тур</dt><dd>${esc(t.name)}, ${t.country}</dd><dt>Дати</dt><dd>${fmt(t.dep)} — ${fmt(addDays(t.dep,t.nights))}</dd><dt>Номер</dt><dd>${ROOMS[S.room].n}</dd>
+  <dt>Мандрівники</dt><dd>${S.people.map(p=>esc(p.name.toUpperCase())).join('; ')}</dd><dt>Телефон</dt><dd>${esc(S.contact.phone)}</dd></dl></section>
+  <section class="panel"><h2>Спосіб оплати</h2>
+  <label class="opt ${S.pay==='card'?'on':''}"><input type="radio" name="pay" value="card" ${S.pay==='card'?'checked':''}><span class="grow"><b>Банківська картка</b><br><span class="hint">Оплата на захищеній сторінці банку (у прототипі імітується)</span></span></label>
+  <label class="opt ${S.pay==='inv'?'on':''}"><input type="radio" name="pay" value="inv" ${S.pay==='inv'?'checked':''}><span class="grow"><b>Рахунок на пошту</b><br><span class="hint">Оплатити протягом 48 годин, місце залишається за вами</span></span></label>
+  <label class="opt ${S.terms?'on':''}"><input type="checkbox" id="terms" ${S.terms?'checked':''}><span class="grow">Погоджуюся з умовами договору, скасування та обробки персональних даних</span></label>
+  <div class="row" style="margin-top:12px"><button class="btn ghost" type="button" data-back>Назад</button><button class="btn" type="button" id="paybtn" data-pay ${S.terms?'':'disabled'}>${S.pay==='card'?'Оплатити':'Отримати рахунок'} ${eur(c.total)}</button></div>
+  <div class="toast">${S.terms?'':'Кнопка стане активною, коли ви погодитеся з умовами.'}</div></section>`;
+}
+
+/* ---------- крок 6: готово ---------- */
+function renderDone(){
+  const t=S.tour,c=calc();
+  $('#main').innerHTML=`<section class="panel"><div class="ok-box"><strong>Замовлення оформлено</strong><div>Номер путівки: <b>${S.booking}</b>. Підтвердження надіслано на ${esc(S.contact.email)}.</div></div>
+  <h1>${esc(t.name)}</h1><p class="lead">${t.country} · ${fmt(t.dep)} — ${fmt(addDays(t.dep,t.nights))}</p>
+  <dl class="kv"><dt>Готель</dt><dd>${esc(t.hotel)}, ${ROOMS[S.room].n}</dd><dt>Мандрівники</dt><dd>${S.people.map(p=>esc(p.name.toUpperCase())).join('; ')}</dd>
+  <dt>Сплачено</dt><dd>${eur(c.total)} (${S.pay==='card'?'картка':'за рахунком'})</dd><dt>Далі</dt><dd>За 3 дні до вильоту ми надішлемо електронні квитки та контакти гіда.</dd></dl>
+  <div class="row" style="margin-top:16px"><span class="hint">Скасування безкоштовне до ${fmt(addDays(t.dep,-14))}.</span><button class="btn" type="button" data-new>Нове замовлення</button></div></section>`;
+}
+
+function go(n){S.step=n;S.errors={};draw();window.scrollTo({top:0})}
+function draw(){
+  renderSteps();renderSummary();
+  [renderSearch,renderTour,renderPeople,renderExtras,renderPay,renderDone][S.step]();
+}
+
+/* ---------- події ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  if(b.dataset.go!==undefined&&!b.disabled) return go(+b.dataset.go);
+  if(b.dataset.n){const k=b.dataset.n,d=+b.dataset.d,f=S.f;
+    if(k==='adults') f.adults=Math.min(6,Math.max(1,f.adults+d)); else {f.kids=Math.min(4,Math.max(0,f.kids+d)); while(f.ages.length<f.kids) f.ages.push(7); f.ages.length=f.kids;}
+    renderSearch();renderSummary();return;}
+  if(b.dataset.pick){S.tour=TOURS.find(t=>t.id===b.dataset.pick);renderResults();renderSummary();return;}
+  if(b.hasAttribute('data-back')) return go(S.step-1);
+  if(b.hasAttribute('data-new')){Object.assign(S,{step:0,tour:null,room:'std',people:[],contact:{phone:'',email:''},terms:false,booking:null,extras:{ins:true,trf:false,exc:false}});return draw();}
+  if(b.hasAttribute('data-pay')){S.booking='MR-'+(2026000+Math.floor(Math.random()*9000)+1000);return go(5);}
+  if(b.hasAttribute('data-next')){
+    if(S.step===2&&!validatePeople()){renderPeople();const bad=document.querySelector('.invalid');bad&&bad.focus();return;}
+    return go(S.step+1);}
+});
+document.addEventListener('input',e=>{
+  const el=e.target;
+  if(el.id==='budget'){S.f.budget=+el.value;$('#bv').textContent=eur(S.f.budget);renderResults();}
+  else if(el.id==='from'||el.id==='to'){S.f[el.id]=el.value||S.f[el.id];renderResults();}
+  else if(el.dataset.p!==undefined){S.people[+el.dataset.p][el.dataset.k]=el.value;}
+  else if(el.id==='phone'){S.contact.phone=el.value} else if(el.id==='email'){S.contact.email=el.value}
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='country'){S.f.country=el.value;renderResults();}
+  else if(el.id==='sort'){S.f.sort=el.value;renderResults();}
+  else if(el.dataset.type){el.checked?S.f.types.add(el.dataset.type):S.f.types.delete(el.dataset.type);renderResults();}
+  else if(el.dataset.age!==undefined){S.f.ages[+el.dataset.age]=+el.value;}
+  else if(el.name==='room'){S.room=el.value;renderTour();renderSummary();}
+  else if(el.dataset.x){S.extras[el.dataset.x]=el.checked;renderExtras();renderSummary();}
+  else if(el.name==='pay'){S.pay=el.value;renderPay();}
+  else if(el.id==='terms'){S.terms=el.checked;renderPay();}
+});
+draw();
+</script>
